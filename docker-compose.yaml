@@ -36,13 +36,15 @@ services:
             # uncomment to run from source code (only if you build from source)
             # - ./backend/:/root/
             # comment after Step 2 of README
-            - ./backend/configs/:/etc/artemis/
+            #- ./backend/configs/:/etc/artemis/
             # uncomment after Step 2 of README
-            # - ./local_configs/backend/:/etc/artemis/
+            - ./local_configs/backend/:/etc/artemis/
             # comment after Step 2 of README
-            - ./backend/supervisor.d/:/etc/supervisor/conf.d/
+            #- ./backend/supervisor.d/:/etc/supervisor/conf.d/
             # uncomment after Step 2 of README
-            #- ./local_configs/backend/supervisor.d/:/etc/supervisor/conf.d/
+            - ./local_configs/backend/supervisor.d/:/etc/supervisor/conf.d/
+            - ./backend/core/taps/custom.py:/root/core/taps/custom.py
+            - ./backend/test.json:/root/core/taps/test.json
     frontend:
         image: inspiregroup/artemis-frontend:${SYSTEM_VERSION}
         container_name: frontend
@@ -82,9 +84,9 @@ services:
             # uncomment to run from source code  (only if you build from source)
             # - ./frontend/:/root/
             # comment after Step 2 of README
-            - ./frontend/webapp/configs/:/etc/artemis/
+            #- ./frontend/webapp/configs/:/etc/artemis/
             # uncomment after Step 2 of README
-            # - ./local_configs/frontend/:/etc/artemis/
+            - ./local_configs/frontend/:/etc/artemis/
             - ./frontend/db/:/etc/webapp/db/
     nginx:
         image: nginx:1.15-alpine
@@ -103,13 +105,13 @@ services:
             - "443:443"
         volumes:
             # comment after Step 2 of README
-            - ./frontend/webapp/configs/nginx.conf:/etc/nginx/nginx.conf
+            #- ./frontend/webapp/configs/nginx.conf:/etc/nginx/nginx.conf
             # uncomment after Step 2 of README
-            # - ./local_configs/frontend/nginx.conf:/etc/nginx/nginx.conf
+            - ./local_configs/frontend/nginx.conf:/etc/nginx/nginx.conf
             # comment after Step 2 of README
-            - ./frontend/webapp/configs/certs/:/etc/nginx/certs/
+            #- ./frontend/webapp/configs/certs/:/etc/nginx/certs/
             # uncomment after Step 2 of README
-            # - ./local_configs/frontend/certs/:/etc/nginx/certs/
+            - ./local_configs/frontend/certs/:/etc/nginx/certs/
     rabbitmq:
         image: rabbitmq:3.7.8-management-alpine
         container_name: rabbitmq
