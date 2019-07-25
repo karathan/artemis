@@ -1,8 +1,10 @@
 import os
 import signal
+import threading
 from subprocess import Popen
 
 import radix
+import redis
 from kombu import Connection
 from kombu import Consumer
 from kombu import Exchange
@@ -57,6 +59,10 @@ class Monitor:
             self.prefix_file = "/root/monitor_prefixes.json"
             self.monitors = None
             self.flag = True
+            self.redis_host = os.getenv("REDIS_HOST", "backend")
+            self.redis_port = os.getenv("REDIS_PORT", 6739)
+            self.redis = redis.Redis(host=self.redis_host, port=self.redis_port)
+            self.redis_listener = None
 
             # EXCHANGES
             self.config_exchange = Exchange(
@@ -76,6 +82,9 @@ class Monitor:
 
             self.config_request_rpc()
             log.info("started")
+
+            self.redis_listener = self.RedisListener(self.redis)
+            self.redis_listener.start()
 
         def get_consumers(self, Consumer, channel):
             return [
@@ -337,6 +346,33 @@ class Monitor:
                     shell=False,
                 )
                 self.process_ids.append(("Beta BMP {}".format(self.prefix_file), p))
+
+        class RedisListener(threading.Thread):
+            def __init__(self, redis_instance):
+                threading.Thread.__init__(self)
+                self.redis_pubsub = redis_instance.pubsub()
+                self.pubsub_channel_keys = [
+                    "ripe_ris_seen_bgp_update",
+                    "betabmp_seen_bgp_update",
+                    "bgpstreamlive_seen_bgp_update",
+                    "exabgp_seen_bgp_update",
+                ]
+                for pubsub_channel_key in self.pubsub_channel_keys:
+                    self.redis_pubsub.psubscribe(
+                        "__keyspace@0__:{}".format(pubsub_channel_key)
+                    )
+
+            def work(self, item):
+                log.info("Monitor Redis Listener: {}".format(str(item)))
+
+            def run(self):
+                for item in self.redis_pubsub.listen():
+                    if item["data"] == "KILL":
+                        self.pubsub.unsubscribe()
+                        log.info("Monitor Redis Listener: unsubscribed and finished")
+                        break
+                    else:
+                        self.work(item)
 
 
 def run():
