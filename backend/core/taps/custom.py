@@ -36,7 +36,7 @@ def run():
                         producer.publish(
                             msg_, exchange=exchange, routing_key="update", serializer="json"
                         )
-                time.sleep(10)
+                time.sleep(15)
 
     import threading
 
